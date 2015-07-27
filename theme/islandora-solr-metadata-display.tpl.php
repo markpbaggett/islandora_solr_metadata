@@ -16,18 +16,19 @@
  *
  * @see template_preprocess_islandora_solr_metadata_display()
  * @see template_process_islandora_solr_metadata_display()
+ * @TODO (UTK): add solr fields for other collections, make sure using the correct labels and the correct order, add microdata
  */
 ?>
-<?php if ($found):
-  if (!(empty($solr_fields) && variable_get('islandora_solr_metadata_omit_empty_values', FALSE))):?>
+<?php if ($found):?>
+   <?php if (!(empty($solr_fields) && variable_get('islandora_solr_metadata_omit_empty_values', FALSE))):?>
 <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
   <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
   <div class="fieldset-wrapper">
     <dl xmlns:dcterms="http://purl.org/dc/terms/" class="islandora-inline-metadata islandora-metadata-fields">
- <?php
+      <?php
 	      dpm($solr_fields);
 	      if(isset($solr_fields['mods_titleInfo_title_s']['value'])){
-		      print "<dt class='first'>Title</dt><dd class='first'><p>" . $solr_fields['mods_titleInfo_title_s']['value'][0] . "</p></dd>";
+		      print "<dt class='first'>Title</dt><dd class='first' itemprop='name'><p>" . $solr_fields['mods_titleInfo_title_s']['value'][0] . "</p></dd>";
 	      }
 	      if(isset($solr_fields['mods_identifier_local_s']['value'])){
 		      print "<dt>Identifiers</dt><dd><p>" . $solr_fields['mods_identifier_local_s']['value'][0] . "</p></dd>";
@@ -58,7 +59,7 @@
 		      print "<dt>Extent</dt><dd><p>" . $solr_fields['mods_physicalDescription_extent_s']['value'][0] . "</p></dd>";
 	      }
 	      if (isset($solr_fields['mods_abstract_ms']['value'])){
-		      print "<dt>Abstract / Descriptive Note</dt><dd>";
+		      print "<dt>Description</dt><dd>";
 		      foreach($solr_fields['mods_abstract_ms']['value'] as $value){
 				  print "<p>" . $value . "</p>";
 		      }
@@ -88,7 +89,7 @@
 	      if (isset($solr_fields['mods_subject_geographic_ms']['value'])){
 		      print "<dt>Subject Geographic</dt><dd>";
 		      foreach(array_combine($solr_fields['mods_subject_geographic_ms']['value'], $solr_fields['mods_subject_cartographics_coordinates_ms']['value']) as $value => $cartographic){
-				  print "<p>" . $value . " (" . $cartographic . ")</p>";
+				  print "<p>" . $value . " - (" . $cartographic . ")</p>";
 		      }
 		      print "</dt>";
 	      }
@@ -108,18 +109,39 @@
 		      }
 		      print "</dt>";
 	      }
-	      if (isset($solr_fields['mods_accessCondition_ms']['value'])){
+	      if (isset($solr_fields['mods_accessCondition_use_and_reproduction_ms']['value'])){
 		      print "<dt>Rights</dt><dd>";
-		      foreach($solr_fields['mods_accessCondition_ms']['value'] as $value){
+		      foreach($solr_fields['mods_accessCondition_use_and_reproduction_ms']['value'] as $value){
 				  print "<p>" . $value . "</p>";
 		      }
 		      print "</dt>";
 	      }
-	      if (isset($solr_fields['mods_location_physicalLocation_s']['value'])){
+	      if (isset($solr_fields['mods_location_physicalLocation_s']['value']) OR isset($solr_fields['mods_relatedItem_host_identifier_local_ms']['value'])){
 		      print "<dt>Repository Information</dt><dd>";
-		      print "<p><strong>Repository: </strong>" . $solr_fields['mods_location_physicalLocation_s']['value'][0] . "</p>";
-		      print "<p><strong>Archival Collection: </strong>" . $solr_fields['mods_relatedItem_host_Collection_titleInfo_title_s']['value'][0] . "</p>";
-		      print "<p><strong>Collection Identifier: </strong>" . $solr_fields['mods_relatedItem_host_Collection_identifier_local_s']['value'][0] . "</p>";
+		      if(isset($solr_fields['mods_location_physicalLocation_ms']['value'])){
+			      print "<p><strong>Repository: </strong><br>";
+			      foreach($solr_fields['mods_location_physicalLocation_ms']['value'] as $value){
+				      print $value . "<br>";
+			      }
+			      print "</p>";
+			      }
+		      if(isset($solr_fields['mods_relatedItem_host_titleInfo_title_ms']['value'])){
+			      print "<p><strong>Collections: </strong><br>";
+			      foreach($solr_fields['mods_relatedItem_host_titleInfo_title_ms']['value'] as $value){
+				  	print $value . "<br>";
+		      	  }
+			  	  print "</p>";
+		      }
+	      if (isset($solr_fields['mods_relatedItem_host_location_url_ms']['value'])){
+		      print "<p><strong>Digital Collection URL</strong>: ";
+		      foreach($solr_fields['mods_relatedItem_host_location_url_ms']['value'] as $value){
+				  print "<a href='" . $value . "'</a>" . $value . "</a><br>";
+		      }
+		      print "</p>";
+	      }
+		  if(isset($solr_fields['mods_relatedItem_host_identifier_local_ms']['value'])){
+			      print "<p><strong>Archival Collection Identifier: </strong>" . $solr_fields['mods_relatedItem_host_identifier_local_ms']['value'][0] . "</p>";
+			    }
 		      print "</dd>";
 	      }
 	      if (isset($solr_fields['mods_relatedItem_host_Project_titleInfo_title_s']['value'])){
@@ -132,18 +154,21 @@
 	      if (isset($solr_fields['mods_physicalDescription_internetMediaType_s']['value'])){
 		      print "<dt>Internet Media Type</dt><dd><p>" . $solr_fields['mods_physicalDescription_internetMediaType_s']['value'][0] . "</p></dd>";
 	      }
+	      if (isset($solr_fields['mods_typeOfResource_ms']['value'])){
+		      print "<dt>Type of Resource</dt><dd><p>" . $solr_fields['mods_typeOfResource_ms']['value'][0] . "</p></dd>";
+	      }
 	      if (isset($solr_fields['mods_recordInfo_recordContentSource_ms']['value'])){
 		      print "<dt>Record Source</dt><dd>";
 		      foreach($solr_fields['mods_recordInfo_recordContentSource_ms']['value'] as $value){
 				  print "<p>" . $value . "</p>";
 		      }
-		      print "</dt>";
+		      print "</dd>";
 	      }
 	  	?>
     </dl>
   </div>
 </fieldset>
-<?php endif; ?>
+  <?php endif; ?>
 <?php else: ?>
   <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
     <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
